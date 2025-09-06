@@ -1,0 +1,11 @@
+{
+  "testConfig": {
+    "changelog": "tests/fixtures/CHANGELOG.test.md",
+    "successVersion": "v1.0.0",
+    "errorVersion": "v99.99.99"
+  },
+  "outputFormatting": {
+    "colors": true,
+    "emojis": true
+  }
+}

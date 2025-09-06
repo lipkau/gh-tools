@@ -1,0 +1,34 @@
+{
+  "name": "@lipkau/changelog-to-release",
+  "version": "1.1.0",
+  "description": "Convert changelog entry to release body with emoji support and section sorting",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "ncc build src/index.ts -o dist --license licenses.txt",
+    "test": "node tests/test-runner.js full",
+    "test:success": "node tests/test-runner.js success",
+    "test:error": "node tests/test-runner.js error"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lipkau/gh-tools.git"
+  },
+  "keywords": [
+    "github-actions",
+    "changelog",
+    "release",
+    "automation"
+  ],
+  "author": {
+    "name": "lipkau",
+    "url": "https://github.com/lipkau"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lipkau/gh-tools/issues"
+  },
+  "homepage": "https://github.com/lipkau/gh-tools",
+  "dependencies": {
+    "@actions/core": "^1.11.1"
+  }
+}

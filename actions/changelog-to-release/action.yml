@@ -1,0 +1,24 @@
+name: "Changelog to Release"
+description: "Convert changelog entry to release body"
+inputs:
+  version-name:
+    description: "Version to find in changelog"
+    required: true
+  changelog:
+    description: "Path to changelog"
+    required: false
+    default: "CHANGELOG.md"
+  configuration:
+    description: "Path to configuration file"
+    required: false
+outputs:
+  title:
+    description: "Release title"
+  body:
+    description: "Release body"
+runs:
+  using: node24
+  main: "dist/index.js"
+branding:
+  icon: align-left
+  color: purple

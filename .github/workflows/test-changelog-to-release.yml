@@ -1,0 +1,102 @@
+name: Test changelog-to-release
+
+on:
+  push:
+    paths:
+      - 'actions/changelog-to-release/**'
+  pull_request:
+    paths:
+      - 'actions/changelog-to-release/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - run: npm install
+
+      - name: Build action
+        run: cd actions/changelog-to-release && npm run build
+
+      - name: Run tests
+        run: cd actions/changelog-to-release && npm test
+
+      # Test multiple version formats
+      - name: Test v1.1.0 (simple version)
+        uses: ./actions/changelog-to-release
+        id: test-v1-1-0
+        with:
+          version-name: 'v1.1.0'
+          changelog: 'actions/changelog-to-release/CHANGELOG.md'
+
+      - name: Verify v1.1.0 output
+        run: |
+          echo "Title: ${{ steps.test-v1-1-0.outputs.title }}"
+          echo "Body: ${{ steps.test-v1-1-0.outputs.body }}"
+          # Check that outputs are not empty
+          if [ -z "${{ steps.test-v1-1-0.outputs.title }}" ]; then
+            echo "ERROR: Title output is empty"
+            exit 1
+          fi
+          if [ -z "${{ steps.test-v1-1-0.outputs.body }}" ]; then
+            echo "ERROR: Body output is empty"
+            exit 1
+          fi
+          # Check expected title format
+          if [[ "${{ steps.test-v1-1-0.outputs.title }}" != "v1.1.0" ]]; then
+            echo "ERROR: Title does not match expected format"
+            exit 1
+          fi
+          echo "✅ v1.1.0 test passed"
+
+      - name: Test v1.0.0 (version with subtitle)
+        uses: ./actions/changelog-to-release
+        id: test-v1-0-0
+        with:
+          version-name: 'v1.0.0'
+          changelog: 'actions/changelog-to-release/CHANGELOG.md'
+
+      - name: Verify v1.0.0 output
+        run: |
+          echo "Title: ${{ steps.test-v1-0-0.outputs.title }}"
+          echo "Body: ${{ steps.test-v1-0-0.outputs.body }}"
+          # Check that outputs are not empty
+          if [ -z "${{ steps.test-v1-0-0.outputs.title }}" ]; then
+            echo "ERROR: Title output is empty"
+            exit 1
+          fi
+          if [ -z "${{ steps.test-v1-0-0.outputs.body }}" ]; then
+            echo "ERROR: Body output is empty"
+            exit 1
+          fi
+          # Check expected title format
+          if [[ "${{ steps.test-v1-0-0.outputs.title }}" != "v1.0.0 - First Release" ]]; then
+            echo "ERROR: Title does not match expected format"
+            echo "Expected: 'v1.0.0 - First Release'"
+            echo "Actual: '${{ steps.test-v1-0-0.outputs.title }}'"
+            exit 1
+          fi
+          echo "✅ v1.0.0 test passed"
+
+      # Test error conditions
+      - name: Test missing version (should fail)
+        uses: ./actions/changelog-to-release
+        id: test-missing-version
+        continue-on-error: true
+        with:
+          version-name: 'v99.99.99'
+          changelog: 'actions/changelog-to-release/CHANGELOG.md'
+
+      - name: Verify missing version fails appropriately
+        run: |
+          if [ "${{ steps.test-missing-version.outcome }}" != "failure" ]; then
+            echo "ERROR: Action should have failed for missing version"
+            exit 1
+          fi
+          echo "✅ Missing version error handling works correctly"
