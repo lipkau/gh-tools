@@ -1,0 +1,106 @@
+name: Release Actions
+
+on:
+  push:
+    tags:
+      - '*/v*' # Matches action-name/v1.0.0 pattern
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g., changelog-to-release/v1.1.0)'
+        required: true
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Parse tag
+        id: parse
+        run: |
+          # Get tag from push or manual input
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${{ github.ref_name }}"
+          fi
+
+          # Extract action name and version
+          ACTION_NAME=$(echo "$TAG" | cut -d'/' -f1)
+          VERSION=$(echo "$TAG" | cut -d'/' -f2)
+
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "action_name=$ACTION_NAME" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "action_path=actions/$ACTION_NAME" >> $GITHUB_OUTPUT
+
+      - name: Verify action exists
+        run: |
+          if [ ! -d "${{ steps.parse.outputs.action_path }}" ]; then
+            echo "Error: Action directory ${{ steps.parse.outputs.action_path }} does not exist"
+            exit 1
+          fi
+          if [ ! -f "${{ steps.parse.outputs.action_path }}/CHANGELOG.md" ]; then
+            echo "Error: CHANGELOG.md not found in ${{ steps.parse.outputs.action_path }}"
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - run: npm install
+
+      - run: npm run build
+
+      - uses: ./actions/changelog-to-release
+        id: release_notes
+        with:
+          version-name: ${{ steps.parse.outputs.version }}
+          changelog: ${{ steps.parse.outputs.action_path }}/CHANGELOG.md
+
+      - uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.parse.outputs.tag }}
+          name: '${{ steps.parse.outputs.action_name }} ${{ steps.release_notes.outputs.title }}'
+          body: |
+            ${{ steps.release_notes.outputs.body }}
+
+            ## 📦 Usage
+
+            ```yaml
+            uses: lipkau/gh-tools/actions/${{ steps.parse.outputs.action_name }}@${{ steps.parse.outputs.tag }}
+            ```
+
+            Or use the major version for auto-updates:
+
+            ```yaml
+            uses: lipkau/gh-tools/actions/${{ steps.parse.outputs.action_name }}@v1
+            ```
+
+            ## 📁 Action Directory
+
+            [`actions/${{ steps.parse.outputs.action_name }}`](https://github.com/${{ github.repository }}/tree/${{ steps.parse.outputs.tag }}/actions/${{ steps.parse.outputs.action_name }})
+          draft: false
+          prerelease: false
+
+      - name: Update major version tag
+        run: |
+          # Configure git for the action
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # Extract major version (e.g., v1.1.0 -> v1)
+          MAJOR_VERSION=$(echo "${{ steps.parse.outputs.version }}" | cut -d'.' -f1)
+          echo "Creating/updating major version tag: $MAJOR_VERSION"
+          
+          # Create or move the major version tag to current commit
+          git tag -f "$MAJOR_VERSION"
+          git push origin "$MAJOR_VERSION" --force
