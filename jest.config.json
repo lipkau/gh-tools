@@ -1,0 +1,32 @@
+{
+  "projects": [
+    {
+      "displayName": "changelog-to-release",
+      "preset": "ts-jest",
+      "testEnvironment": "node",
+      "testMatch": [
+        "<rootDir>/actions/changelog-to-release/**/?(*.)+(spec|test).{ts,js}"
+      ],
+      "collectCoverageFrom": [
+        "actions/changelog-to-release/src/**/*.ts",
+        "!actions/changelog-to-release/src/**/*.d.ts"
+      ],
+      "coverageDirectory": "actions/changelog-to-release/coverage",
+      "transform": {
+        "^.+\\.ts$": [
+          "ts-jest",
+          {
+            "tsconfig": {
+              "esModuleInterop": true,
+              "allowSyntheticDefaultImports": true
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "collectCoverageFrom": ["actions/*/src/**/*.ts", "!actions/*/src/**/*.d.ts"],
+  "coverageDirectory": "coverage",
+  "coverageReporters": ["text", "lcov", "html"],
+  "testPathIgnorePatterns": ["/node_modules/", "/dist/", "/lib/"]
+}

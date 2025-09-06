@@ -1,0 +1,10 @@
+{
+  "extends": [
+    "@tsconfig/node24/tsconfig.json",
+    "@tsconfig/strictest/tsconfig.json"
+  ],
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "exclude": ["node_modules", "**/node_modules", "**/lib", "**/dist"]
+}
