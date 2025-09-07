@@ -54,7 +54,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version-file: .nvmrc
 
       - run: npm install
 
@@ -96,11 +96,11 @@ jobs:
           # Configure git for the action
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          
+
           # Extract major version (e.g., v1.1.0 -> v1)
           MAJOR_VERSION=$(echo "${{ steps.parse.outputs.version }}" | cut -d'.' -f1)
           echo "Creating/updating major version tag: $MAJOR_VERSION"
-          
+
           # Create or move the major version tag to current commit
           git tag -f "$MAJOR_VERSION"
           git push origin "$MAJOR_VERSION" --force
