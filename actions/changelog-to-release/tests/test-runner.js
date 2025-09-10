@@ -83,17 +83,37 @@ function printSummary() {
 }
 
 /**
- * Build the project quietly
+ * Build the project quietly if needed
  */
 function buildQuiet() {
+  const distPath = path.join(__dirname, '..', 'dist', 'index.js')
+  
+  // Check if dist/index.js already exists
+  if (fs.existsSync(distPath)) {
+    console.log('dist/index.js already exists, skipping build')
+    return
+  }
+  
   try {
-    execSync('npm run build', {stdio: 'pipe', cwd: path.join(__dirname, '..')})
-  } catch (error) {
-    console.error(
-      'Build failed:',
-      error instanceof Error ? error.message : String(error)
-    )
-    process.exit(1)
+    // Try workspace build first
+    execSync('npm run build --workspace=@lipkau/changelog-to-release', {
+      stdio: 'pipe',
+      cwd: path.join(__dirname, '../../..')
+    })
+  } catch (workspaceError) {
+    try {
+      // Fallback to local build
+      execSync('npm run build', {
+        stdio: 'pipe', 
+        cwd: path.join(__dirname, '..')
+      })
+    } catch (localError) {
+      console.error(
+        'Build failed with both workspace and local methods:',
+        localError instanceof Error ? localError.message : String(localError)
+      )
+      process.exit(1)
+    }
   }
 }
 
