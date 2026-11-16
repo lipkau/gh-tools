@@ -1,0 +1,47 @@
+name: "GHCR Cleanup"
+description: "Delete a repository's stale container images from GHCR without breaking multi-platform images"
+inputs:
+  token:
+    description: "Token with packages: write, pull-requests: read and contents: read on the repository"
+    required: false
+    default: ${{ github.token }}
+  package:
+    description: "Container package name (defaults to the repository name)"
+    required: false
+  default-branch:
+    description: "Branch whose builds are kept by age and count (defaults to the repository's default branch)"
+    required: false
+  keep-tags:
+    description: "Regular expression for extra tags that always keep their image, such as ^dev$"
+    required: false
+  keep-days:
+    description: "Keep default-branch builds younger than this many days"
+    required: false
+    default: "30"
+  keep-count:
+    description: "Keep this many of the newest default-branch builds, whatever their age"
+    required: false
+    default: "10"
+  orphans:
+    description: "Untagged images whose tag moved on: report (default) or delete"
+    required: false
+    default: "report"
+  orphan-min-age-days:
+    description: "With orphans: delete, only delete untagged images older than this many days"
+    required: false
+    default: "30"
+  dry-run:
+    description: "Only report what would be deleted"
+    required: false
+    default: "false"
+outputs:
+  planned:
+    description: "Number of package versions selected for deletion"
+  deleted:
+    description: "Number of package versions deleted (0 in a dry run)"
+runs:
+  using: node24
+  main: "dist/index.js"
+branding:
+  icon: trash-2
+  color: purple

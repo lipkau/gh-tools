@@ -1,0 +1,32 @@
+{
+  "name": "@lipkau/ghcr-cleanup",
+  "version": "1.0.0",
+  "description": "Delete a repository's stale container images from GHCR without breaking multi-platform images",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "ncc build src/index.ts -o dist --license licenses.txt",
+    "test": "node --test tests/plan.test.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lipkau/gh-tools.git"
+  },
+  "keywords": [
+    "github-actions",
+    "ghcr",
+    "container",
+    "cleanup"
+  ],
+  "author": {
+    "name": "lipkau",
+    "url": "https://github.com/lipkau"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lipkau/gh-tools/issues"
+  },
+  "homepage": "https://github.com/lipkau/gh-tools",
+  "dependencies": {
+    "@actions/core": "^2.0.3"
+  }
+}

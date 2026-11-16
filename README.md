@@ -16,6 +16,11 @@ automation tasks.
 Transform `CHANGELOG.md` entries into beautifully formatted GitHub releases with emoji support
 and intelligent section sorting.
 
+### [**GHCR Cleanup**](actions/ghcr-cleanup/)
+
+Delete a repository's stale container images from GHCR: closed PRs' images, superseded builds and
+old default-branch builds, without breaking multi-platform images.
+
 ## 📖 Quick Start
 
 Each action is self-contained and can be used independently. Simply reference the action in your workflow:
