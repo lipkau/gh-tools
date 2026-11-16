@@ -164,6 +164,8 @@ function runTest(versionName, scenario, expectError = false) {
     } else {
       const errorMessage = String(error?.message || error)
       console.error('Test failed unexpectedly:', errorMessage)
+      if (error?.stdout) console.error(formatOutput(String(error.stdout)))
+      if (error?.stderr) console.error(String(error.stderr))
       process.exit(1)
     }
   }
