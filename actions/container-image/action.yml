@@ -1,0 +1,185 @@
+name: Container Image
+description: Build a repository's container image and push it to GHCR with consistent tags
+author: lipkau
+
+inputs:
+  latest:
+    description: >-
+      Which build gets `latest`: `release` (the newest release tag on the default branch) or `main`
+      (every default-branch build), for repositories that don't cut releases.
+    default: release
+  image:
+    description: Image name, without a tag
+    default: ghcr.io/${{ github.repository }}
+  platforms:
+    description: Platforms to build for default-branch and release builds
+    default: linux/amd64,linux/arm64
+  pr-platforms:
+    description: Platforms to build for pull requests; empty means `platforms`
+    default: ""
+  context:
+    description: Build context
+    default: .
+  file:
+    description: Dockerfile path; empty means `<context>/Dockerfile`
+    default: ""
+  target:
+    description: Build stage to export; empty means the last stage
+    default: ""
+  build-args:
+    description: Build arguments, one `NAME=value` per line
+    default: ""
+  checkout:
+    description: "`false` when the job has already checked out the commit to build"
+    default: "true"
+  fetch-depth:
+    description: Commits to check out; 0 means the full history
+    default: "1"
+  push:
+    description: "`auto` pushes except for a fork's pull request; `false` only builds"
+    default: auto
+  token:
+    description: "Token that can push packages (`packages: write`)"
+    default: ${{ github.token }}
+
+outputs:
+  digest:
+    description: Digest of the pushed image (empty when nothing was pushed)
+    value: ${{ steps.build.outputs.digest }}
+  tags:
+    description: Image references that were built, one per line
+    value: ${{ steps.meta.outputs.tags }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check inputs
+      shell: bash
+      env:
+        LATEST: ${{ inputs.latest }}
+        PUSH: ${{ inputs.push }}
+      run: |
+        if [[ $LATEST != release && $LATEST != main ]]; then
+          echo "::error::latest must be \"release\" or \"main\", not \"$LATEST\""
+          exit 1
+        fi
+        if [[ $PUSH != auto && $PUSH != false ]]; then
+          echo "::error::push must be \"auto\" or \"false\", not \"$PUSH\""
+          exit 1
+        fi
+
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      if: inputs.checkout == 'true'
+      with:
+        # Build the commit the sha- tag names, not the pull request's merge commit.
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+        fetch-depth: ${{ inputs.fetch-depth }}
+
+    # `latest` is the newest release from the default branch, so a release tag must point at one of
+    # its commits.
+    - name: Check the release tag is on the default branch
+      if: github.ref_type == 'tag'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+      run: |
+        status=$(gh api "repos/$GITHUB_REPOSITORY/compare/$DEFAULT_BRANCH...$GITHUB_SHA" --jq .status)
+        if [[ $status != identical && $status != behind ]]; then
+          echo "::error::$GITHUB_REF_NAME does not point at a commit on $DEFAULT_BRANCH. Tag a commit on $DEFAULT_BRANCH to release."
+          exit 1
+        fi
+
+    - name: Decide what to build
+      id: plan
+      shell: bash
+      env:
+        BRANCH: ${{ github.head_ref || github.ref_name }}
+        EVENT: ${{ github.event_name }}
+        HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+        PLATFORMS: ${{ inputs.platforms }}
+        PR_PLATFORMS: ${{ inputs.pr-platforms }}
+        PUSH: ${{ inputs.push }}
+      run: |
+        # Docker tags allow [A-Za-z0-9_.-], up to 128 characters: feat/x becomes feat-x.
+        # ghcr-cleanup derives the same tag to find a closed pull request's images.
+        tag=$(printf '%s' "$BRANCH" | tr -c 'A-Za-z0-9_.-' '-' | sed 's/^[.-]*//' | cut -c1-128)
+        echo "branch-tag=$tag" >> "$GITHUB_OUTPUT"
+
+        platforms=$PLATFORMS
+        push=true
+        [[ $PUSH == false ]] && push=false
+        if [[ $EVENT == pull_request ]]; then
+          platforms=${PR_PLATFORMS:-$PLATFORMS}
+          # A fork's pull request gets a read-only token: build without pushing.
+          [[ $HEAD_REPO == "$GITHUB_REPOSITORY" ]] || push=false
+        fi
+        echo "platforms=$platforms" >> "$GITHUB_OUTPUT"
+        echo "push=$push" >> "$GITHUB_OUTPUT"
+
+    - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+      if: contains(steps.plan.outputs.platforms, ',')
+
+    - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+    - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+      if: steps.plan.outputs.push == 'true'
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ inputs.token }}
+
+    - uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+      id: meta
+      env:
+        # Name pull request images after the head commit, matching the checkout above.
+        DOCKER_METADATA_PR_HEAD_SHA: "true"
+        DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+      with:
+        images: ${{ inputs.image }}
+        # The first tag that applies decides `latest`. With latest=auto only a semver tag without a
+        # pre-release part (v1.2.3, not v1.3.0-rc.1) adds it, so the semver patterns come first.
+        flavor: |
+          latest=${{ inputs.latest == 'release' && 'auto' || 'false' }}
+        tags: |
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=semver,pattern={{major}}
+          type=semver,pattern=v{{version}}
+          type=raw,value=latest,enable=${{ inputs.latest == 'main' && github.ref_name == github.event.repository.default_branch && github.ref_type == 'branch' }}
+          type=raw,value=${{ steps.plan.outputs.branch-tag }},enable=${{ github.ref_type != 'tag' }}
+          type=sha,format=short
+
+    - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+      id: build
+      with:
+        context: ${{ inputs.context }}
+        file: ${{ inputs.file }}
+        target: ${{ inputs.target }}
+        build-args: ${{ inputs.build-args }}
+        platforms: ${{ steps.plan.outputs.platforms }}
+        push: ${{ steps.plan.outputs.push }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        annotations: ${{ steps.meta.outputs.annotations }}
+        provenance: mode=max
+        sbom: true
+        cache-from: type=gha
+        # The cache only speeds builds up; a refused cache write must not fail the image.
+        cache-to: type=gha,mode=max,ignore-error=true
+
+    - name: Summary
+      shell: bash
+      env:
+        TAGS: ${{ steps.meta.outputs.tags }}
+        DIGEST: ${{ steps.build.outputs.digest }}
+        PUSH: ${{ steps.plan.outputs.push }}
+      run: |
+        {
+          if [[ $PUSH == true ]]; then echo "### Pushed image"; else echo "### Built image (not pushed)"; fi
+          echo
+          echo '```'
+          printf '%s\n' "$TAGS"
+          [[ -n $DIGEST ]] && echo "digest: $DIGEST"
+          echo '```'
+        } >> "$GITHUB_STEP_SUMMARY"

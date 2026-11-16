@@ -1,0 +1,21 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Shared Renovate settings for lipkau's repositories. Extend with github>lipkau/gh-tools//renovate/default",
+  "extends": ["config:best-practices", ":semanticCommits"],
+  "minimumReleaseAge": "3 days",
+  "internalChecksFilter": "strict",
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "description": "One pull request for every minor, patch and digest update",
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
+      "groupName": "non-major dependencies",
+      "groupSlug": "non-major"
+    },
+    {
+      "description": "Review major upgrades in the Dependency Dashboard before a pull request opens",
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    }
+  ]
+}
