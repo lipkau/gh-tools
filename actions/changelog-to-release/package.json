@@ -1,6 +1,6 @@
 {
   "name": "@lipkau/changelog-to-release",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Convert changelog entry to release body with emoji support and section sorting",
   "main": "dist/index.js",
   "scripts": {
@@ -29,6 +29,6 @@
   },
   "homepage": "https://github.com/lipkau/gh-tools",
   "dependencies": {
-    "@actions/core": "^1.11.1"
+    "@actions/core": "^2.0.3"
   }
 }

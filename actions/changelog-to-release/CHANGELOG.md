@@ -3,6 +3,13 @@
 > **Note:** This action is based on [@MatteoCampinoti94/changelog-to-release](https://github.com/MatteoCampinoti94/changelog-to-release).
 > This changelog continues from his last release v1.0.3.
 
+## v1.1.1
+
+### Fixes
+
+* Update `@actions/core` to v2, which bundles undici 6.29.1 instead of 5.29.0 with its
+  advisories
+
 ## v1.1.0
 
 ### Changes
