@@ -5,7 +5,7 @@
  * Works on Windows, macOS, and Linux without additional dependencies
  */
 
-const {execSync} = require('child_process')
+const {execFileSync, execSync} = require('child_process')
 const fs = require('fs')
 const path = require('path')
 
@@ -140,7 +140,9 @@ function runTest(versionName, scenario, expectError = false) {
       INPUT_CHANGELOG: changelog
     }
 
-    const result = execSync('node dist/index.js', {
+    // No shell: dash, Ubuntu's /bin/sh, drops INPUT_VERSION-NAME because of
+    // the hyphen, so the action would never see its input.
+    const result = execFileSync(process.execPath, ['dist/index.js'], {
       env,
       cwd: path.join(__dirname, '..'),
       encoding: 'utf8',
@@ -164,6 +166,8 @@ function runTest(versionName, scenario, expectError = false) {
     } else {
       const errorMessage = String(error?.message || error)
       console.error('Test failed unexpectedly:', errorMessage)
+      if (error?.stdout) console.error(formatOutput(String(error.stdout)))
+      if (error?.stderr) console.error(String(error.stderr))
       process.exit(1)
     }
   }

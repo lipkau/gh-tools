@@ -32,19 +32,30 @@
     "clean": "rm -rf actions/*/dist actions/*/lib packages/*/node_modules node_modules"
   },
   "devDependencies": {
-    "@eslint/js": "^9.35.0",
+    "@eslint/js": "^9.39.5",
     "@tsconfig/node24": "^24.0.1",
     "@tsconfig/strictest": "^2.0.5",
     "@types/node": "^24.3.1",
     "@vercel/ncc": "^0.38.3",
     "better-npm-audit": "^3.11.0",
-    "eslint": "^9.35.0",
-    "markdownlint-cli": "^0.45.0",
+    "eslint": "^9.39.5",
+    "markdownlint-cli": "^0.50.0",
     "prettier": "^3.6.2",
     "typescript": "^5.9.2",
-    "typescript-eslint": "^8.42.0"
+    "typescript-eslint": "^8.72.2"
   },
   "workspaces": [
     "actions/*"
-  ]
+  ],
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.8"
+    },
+    "markdownlint-cli": {
+      "minimatch": "^11.0.8"
+    },
+    "micromark-extension-math": {
+      "katex": "^0.18.11"
+    }
+  }
 }
