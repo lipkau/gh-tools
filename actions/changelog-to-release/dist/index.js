@@ -3880,7 +3880,7 @@ const { parseMIMEType, serializeAMimeType } = __nccwpck_require__(192)
 module.exports.parseMIMEType = parseMIMEType
 module.exports.serializeAMimeType = serializeAMimeType
 
-const { CloseEvent, ErrorEvent, MessageEvent } = __nccwpck_require__(6760)
+const { CloseEvent, ErrorEvent, MessageEvent } = __nccwpck_require__(4379)
 module.exports.WebSocket = __nccwpck_require__(2522).WebSocket
 module.exports.CloseEvent = CloseEvent
 module.exports.ErrorEvent = ErrorEvent
@@ -18228,7 +18228,7 @@ const { makeRequest } = __nccwpck_require__(9683)
 const { webidl } = __nccwpck_require__(4625)
 const { EventSourceStream } = __nccwpck_require__(8819)
 const { parseMIMEType } = __nccwpck_require__(192)
-const { createFastMessageEvent } = __nccwpck_require__(6760)
+const { createFastMessageEvent } = __nccwpck_require__(4379)
 const { isNetworkError } = __nccwpck_require__(7287)
 const { delay } = __nccwpck_require__(3943)
 const { kEnumerableProperty } = __nccwpck_require__(9500)
@@ -29316,7 +29316,7 @@ const {
 } = __nccwpck_require__(4911)
 const { fireEvent, failWebsocketConnection, isClosing, isClosed, isEstablished, parseExtensions } = __nccwpck_require__(965)
 const { channels } = __nccwpck_require__(5458)
-const { CloseEvent } = __nccwpck_require__(6760)
+const { CloseEvent } = __nccwpck_require__(4379)
 const { makeRequest } = __nccwpck_require__(9683)
 const { fetching } = __nccwpck_require__(4202)
 const { Headers, getHeadersList } = __nccwpck_require__(3408)
@@ -29753,7 +29753,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 6760:
+/***/ 4379:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
 "use strict";
@@ -30982,7 +30982,7 @@ module.exports = {
 
 const { kReadyState, kController, kResponse, kBinaryType, kWebSocketURL } = __nccwpck_require__(4911)
 const { states, opcodes } = __nccwpck_require__(7119)
-const { ErrorEvent, createFastMessageEvent } = __nccwpck_require__(6760)
+const { ErrorEvent, createFastMessageEvent } = __nccwpck_require__(4379)
 const { isUtf8 } = __nccwpck_require__(4573)
 const { collectASequenceOfCodePointsFast, removeHTTPWhitespace } = __nccwpck_require__(192)
 
@@ -31335,7 +31335,7 @@ const { ByteParser } = __nccwpck_require__(1872)
 const { kEnumerableProperty, isBlobLike } = __nccwpck_require__(9500)
 const { getGlobalDispatcher } = __nccwpck_require__(1481)
 const { types } = __nccwpck_require__(7975)
-const { ErrorEvent, CloseEvent } = __nccwpck_require__(6760)
+const { ErrorEvent, CloseEvent } = __nccwpck_require__(4379)
 const { SendQueue } = __nccwpck_require__(504)
 
 // https://websockets.spec.whatwg.org/#interface-definition
@@ -31946,9 +31946,9 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
+const node_fs_1 = __nccwpck_require__(3024);
+const node_path_1 = __nccwpck_require__(6760);
 const core = __importStar(__nccwpck_require__(7184));
-const fs_1 = __nccwpck_require__(9896);
-const path_1 = __nccwpck_require__(6928);
 const defaultConfiguration = {
     emojisPrefix: true,
     emojis: {
@@ -32032,12 +32032,16 @@ function orderSections(sections, sectionsOrder) {
         const bIndex = sectionsOrder.indexOf(b.toLowerCase());
         return aIndex === bIndex ? 0 : aIndex > bIndex ? 1 : -1;
     })
-        .forEach(([title, body]) => sectionsOrdered.push([title, body]));
+        .forEach(([title, body]) => {
+        sectionsOrdered.push([title, body]);
+    });
     // Add remaining sections alphabetically
     sections
         .filter(([title]) => !sectionsOrder.includes(title.toLowerCase()))
         .sort(([a], [b]) => a.localeCompare(b))
-        .forEach(([title, body]) => sectionsOrdered.push([title, body]));
+        .forEach(([title, body]) => {
+        sectionsOrdered.push([title, body]);
+    });
     return sectionsOrdered;
 }
 function emojiSections(sections, sectionsEmojis, prefix) {
@@ -32064,10 +32068,10 @@ async function run() {
         core.info(`VERSION: ${versionName}`);
         core.info(`CHANGELOG: ${changelogPath}`);
         core.info(`CONFIGURATION: ${configurationPath || '{default}'}`);
-        const changelog = (0, fs_1.readFileSync)(changelogPath, { encoding: 'utf-8' }).trim() + '\n';
+        const changelog = `${(0, node_fs_1.readFileSync)(changelogPath, { encoding: 'utf-8' }).trim()}\n`;
         let configuration;
         if (configurationPath) {
-            const configData = JSON.parse((0, fs_1.readFileSync)(configurationPath, { encoding: 'utf-8' }));
+            const configData = JSON.parse((0, node_fs_1.readFileSync)(configurationPath, { encoding: 'utf-8' }));
             configuration = {
                 ...defaultConfiguration,
                 ...configData,
@@ -32082,7 +32086,7 @@ async function run() {
         const versionKeys = Object.keys(versions);
         core.info(`VERSIONS: ${versionKeys.slice(0, 5).join(', ')}${versionKeys.length > 5 ? `, ... [${versionKeys.length - 5} more]` : ''}`);
         if (!version) {
-            throw new Error(`Version '${versionName}' not found in ${(0, path_1.basename)(changelogPath)}`);
+            throw new Error(`Version '${versionName}' not found in ${(0, node_path_1.basename)(changelogPath)}`);
         }
         const sections = findSections(version.body);
         sections.sections = orderSections(sections.sections, configuration.order);
@@ -32230,6 +32234,14 @@ module.exports = require("node:events");
 
 /***/ }),
 
+/***/ 3024:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:fs");
+
+/***/ }),
+
 /***/ 7067:
 /***/ ((module) => {
 
@@ -32251,6 +32263,14 @@ module.exports = require("node:http2");
 
 "use strict";
 module.exports = require("node:net");
+
+/***/ }),
+
+/***/ 6760:
+/***/ ((module) => {
+
+"use strict";
+module.exports = require("node:path");
 
 /***/ }),
 

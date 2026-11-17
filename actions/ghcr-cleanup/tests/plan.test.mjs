@@ -145,7 +145,7 @@ describe('tagged images', () => {
         number: 6,
         open: true,
         headRef: 'feat/x',
-        headSha: 'bbbbbbb' + '0'.repeat(33)
+        headSha: `bbbbbbb${'0'.repeat(33)}`
       }
     ]
     const onDefaultBranch = new Map([['aaaaaaa', false]])

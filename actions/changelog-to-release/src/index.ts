@@ -1,6 +1,6 @@
+import {readFileSync} from 'node:fs'
+import {basename} from 'node:path'
 import * as core from '@actions/core'
-import {readFileSync} from 'fs'
-import {basename} from 'path'
 
 interface Configuration {
   emojisPrefix?: boolean
@@ -131,13 +131,17 @@ function orderSections(
       const bIndex = sectionsOrder.indexOf(b.toLowerCase())
       return aIndex === bIndex ? 0 : aIndex > bIndex ? 1 : -1
     })
-    .forEach(([title, body]) => sectionsOrdered.push([title, body]))
+    .forEach(([title, body]) => {
+      sectionsOrdered.push([title, body])
+    })
 
   // Add remaining sections alphabetically
   sections
     .filter(([title]) => !sectionsOrder.includes(title.toLowerCase()))
     .sort(([a], [b]) => a.localeCompare(b))
-    .forEach(([title, body]) => sectionsOrdered.push([title, body]))
+    .forEach(([title, body]) => {
+      sectionsOrdered.push([title, body])
+    })
 
   return sectionsOrdered
 }
@@ -176,8 +180,7 @@ async function run(): Promise<void> {
     core.info(`CHANGELOG: ${changelogPath}`)
     core.info(`CONFIGURATION: ${configurationPath || '{default}'}`)
 
-    const changelog =
-      readFileSync(changelogPath, {encoding: 'utf-8'}).trim() + '\n'
+    const changelog = `${readFileSync(changelogPath, {encoding: 'utf-8'}).trim()}\n`
 
     let configuration: Required<Configuration>
     if (configurationPath) {

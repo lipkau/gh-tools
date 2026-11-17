@@ -5,9 +5,9 @@
  * Works on Windows, macOS, and Linux without additional dependencies
  */
 
-const {execFileSync, execSync} = require('child_process')
-const fs = require('fs')
-const path = require('path')
+const {execFileSync, execSync} = require('node:child_process')
+const fs = require('node:fs')
+const path = require('node:path')
 
 // Colors for cross-platform terminal output
 const colors = {
@@ -87,24 +87,24 @@ function printSummary() {
  */
 function buildQuiet() {
   const distPath = path.join(__dirname, '..', 'dist', 'index.js')
-  
+
   // Check if dist/index.js already exists
   if (fs.existsSync(distPath)) {
     console.log('dist/index.js already exists, skipping build')
     return
   }
-  
+
   try {
     // Try workspace build first
     execSync('npm run build --workspace=@lipkau/changelog-to-release', {
       stdio: 'pipe',
       cwd: path.join(__dirname, '../../..')
     })
-  } catch (workspaceError) {
+  } catch (_workspaceError) {
     try {
       // Fallback to local build
       execSync('npm run build', {
-        stdio: 'pipe', 
+        stdio: 'pipe',
         cwd: path.join(__dirname, '..')
       })
     } catch (localError) {
@@ -211,7 +211,6 @@ switch (command) {
     buildQuiet()
     testError()
     break
-  case 'full':
   default:
     runAllTests()
     break
