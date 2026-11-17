@@ -16,10 +16,25 @@ automation tasks.
 Transform `CHANGELOG.md` entries into beautifully formatted GitHub releases with emoji support
 and intelligent section sorting.
 
+### [**Container Image**](actions/container-image/)
+
+Build a repository's container image and push it to GHCR, with the same tags in every repository:
+branch and commit on every build, semver on releases, and `latest` on the newest release.
+
 ### [**GHCR Cleanup**](actions/ghcr-cleanup/)
 
 Delete a repository's stale container images from GHCR: closed PRs' images, superseded builds and
 old default-branch builds, without breaking multi-platform images.
+
+## 🔧 Renovate preset
+
+[`renovate/default.json`](renovate/default.json) holds the Renovate settings shared by lipkau's
+repositories, including a 3-day wait before proposing a release. Extend it from a repository's
+`renovate.json`:
+
+```json
+{"extends": ["github>lipkau/gh-tools//renovate/default"]}
+```
 
 ## 📖 Quick Start
 

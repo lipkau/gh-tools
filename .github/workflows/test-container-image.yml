@@ -1,0 +1,57 @@
+name: Test container-image
+
+on:
+  pull_request:
+    paths:
+      - actions/container-image/**
+      - .github/workflows/test-container-image.yml
+  push:
+    branches: [main]
+    paths:
+      - actions/container-image/**
+      - .github/workflows/test-container-image.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        latest: [release, main]
+    steps:
+      # The action's own checkout would remove the local action it runs from, so check out here.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: ./actions/container-image
+        id: image
+        with:
+          checkout: "false"
+          latest: ${{ matrix.latest }}
+          push: "false"
+          context: actions/container-image/tests
+          build-args: GREETING=hi
+          pr-platforms: linux/amd64
+
+      - name: Check the tags
+        env:
+          TAGS: ${{ steps.image.outputs.tags }}
+          LATEST: ${{ matrix.latest }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          printf '%s\n' "$TAGS"
+          short=${HEAD_SHA:0:7}
+          grep -qx "ghcr.io/lipkau/gh-tools:sha-$short" <<<"$TAGS" || { echo "::error::no sha-$short tag"; exit 1; }
+          if [[ $GITHUB_EVENT_NAME == pull_request ]]; then
+            branch=$(printf '%s' "$GITHUB_HEAD_REF" | tr -c 'A-Za-z0-9_.-' '-' | sed 's/^[.-]*//' | cut -c1-128)
+            grep -qx "ghcr.io/lipkau/gh-tools:$branch" <<<"$TAGS" || { echo "::error::no $branch tag"; exit 1; }
+            ! grep -q ':latest$' <<<"$TAGS" || { echo "::error::a pull request got latest"; exit 1; }
+          else
+            want=no; [[ $LATEST == main ]] && want=yes
+            have=no; grep -q ':latest$' <<<"$TAGS" && have=yes
+            [[ $want == "$have" ]] || { echo "::error::latest=$LATEST: expected latest $want, got $have"; exit 1; }
+          fi
