@@ -1,10 +1,10 @@
 import * as core from '@actions/core'
 import {
-  plan,
   type Facts,
   type Kind,
   type PackageVersion,
   type PullRequest,
+  plan,
   type Settings,
   type Verdict
 } from './plan'

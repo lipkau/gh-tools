@@ -3,10 +3,10 @@ name: Test changelog-to-release
 on:
   push:
     paths:
-      - 'actions/changelog-to-release/**'
+      - "actions/changelog-to-release/**"
   pull_request:
     paths:
-      - 'actions/changelog-to-release/**'
+      - "actions/changelog-to-release/**"
 
 jobs:
   test:
@@ -32,8 +32,8 @@ jobs:
         uses: ./actions/changelog-to-release
         id: test-v1-1-0
         with:
-          version-name: 'v1.1.0'
-          changelog: 'actions/changelog-to-release/CHANGELOG.md'
+          version-name: "v1.1.0"
+          changelog: "actions/changelog-to-release/CHANGELOG.md"
 
       - name: Verify v1.1.0 output
         run: |
@@ -59,8 +59,8 @@ jobs:
         uses: ./actions/changelog-to-release
         id: test-v1-0-0
         with:
-          version-name: 'v1.0.0'
-          changelog: 'actions/changelog-to-release/CHANGELOG.md'
+          version-name: "v1.0.0"
+          changelog: "actions/changelog-to-release/CHANGELOG.md"
 
       - name: Verify v1.0.0 output
         run: |
@@ -90,8 +90,8 @@ jobs:
         id: test-missing-version
         continue-on-error: true
         with:
-          version-name: 'v99.99.99'
-          changelog: 'actions/changelog-to-release/CHANGELOG.md'
+          version-name: "v99.99.99"
+          changelog: "actions/changelog-to-release/CHANGELOG.md"
 
       - name: Verify missing version fails appropriately
         run: |

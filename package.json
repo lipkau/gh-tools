@@ -20,42 +20,24 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "_prettier": "prettier --ignore-path \".gitignore\" --check \"*.{ts,json}\"",
-    "_eslint": "eslint --ext .ts .",
-    "_markdownlint": "markdownlint \"**/*.md\" --ignore node_modules",
     "build": "npm run build --workspaces",
-    "lint": "npm run _prettier && npm run _eslint && npm run _markdownlint",
-    "format": "npm run _prettier -- --write && npm run _eslint -- --fix && npm run _markdownlint -- --fix",
+    "lint": "biome ci",
+    "format": "biome check --write",
     "type-check": "tsc --noEmit",
     "test": "npm test --workspaces",
     "audit": "better-npm-audit audit",
     "clean": "rm -rf actions/*/dist actions/*/lib packages/*/node_modules node_modules"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.5",
+    "@biomejs/biome": "2.6.7",
     "@tsconfig/node24": "^24.0.1",
     "@tsconfig/strictest": "^2.0.5",
     "@types/node": "^24.3.1",
     "@vercel/ncc": "^0.38.3",
     "better-npm-audit": "^3.11.0",
-    "eslint": "^9.39.5",
-    "markdownlint-cli": "^0.50.0",
-    "prettier": "^3.6.2",
-    "typescript": "^5.9.2",
-    "typescript-eslint": "^8.72.2"
+    "typescript": "^5.9.2"
   },
   "workspaces": [
     "actions/*"
-  ],
-  "overrides": {
-    "@typescript-eslint/typescript-estree": {
-      "minimatch": "^11.0.8"
-    },
-    "markdownlint-cli": {
-      "minimatch": "^11.0.8"
-    },
-    "micromark-extension-math": {
-      "katex": "^0.18.11"
-    }
-  }
+  ]
 }

@@ -7,15 +7,15 @@ multi-platform images or images a deployment may still pull.
 
 Each tagged image is judged by its tags. One tag that keeps the image is enough to keep it.
 
-| Tag | Kept when |
-| --- | --- |
-| `latest`, the default branch (`main`), releases (`1.2.3`, `1.2`, `1`, `v1.0.1`) | always |
-| matching `keep-tags` | always |
-| a PR's branch (`fix/x` → `fix-x`) or `pr-<N>` | the PR is open |
-| `sha-<commit>` of the head of an open PR | always |
-| `sha-<commit>` of a default-branch commit | newest `keep-count`, or younger than `keep-days` |
-| `sha-<commit>` of any other commit | never: a superseded or closed PR build |
-| anything else, such as `dev` | always: it was pushed on purpose |
+| Tag                                                                             | Kept when                                        |
+| ------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `latest`, the default branch (`main`), releases (`1.2.3`, `1.2`, `1`, `v1.0.1`) | always                                           |
+| matching `keep-tags`                                                            | always                                           |
+| a PR's branch (`fix/x` → `fix-x`) or `pr-<N>`                                   | the PR is open                                   |
+| `sha-<commit>` of the head of an open PR                                        | always                                           |
+| `sha-<commit>` of a default-branch commit                                       | newest `keep-count`, or younger than `keep-days` |
+| `sha-<commit>` of any other commit                                              | never: a superseded or closed PR build           |
+| anything else, such as `dev`                                                    | always: it was pushed on purpose                 |
 
 A closed PR's branch tag outweighs a `sha-` tag on the default branch, because a merge commit puts
 the PR's head on the default branch while the default-branch image is the merge commit's.
@@ -78,21 +78,21 @@ Admin role. Without it, the run stops at the first deletion and says so.
 
 ## Inputs
 
-| Input | Default | Meaning |
-| --- | --- | --- |
-| `token` | `github.token` | Needs `packages: write`, `pull-requests: read`, `contents: read` |
-| `package` | repository name | Container package to clean up |
-| `default-branch` | the repository's | Branch whose builds are kept by age and count |
-| `keep-tags` | | Regular expression for extra tags that always keep their image |
-| `keep-days` | `30` | Keep default-branch builds younger than this |
-| `keep-count` | `10` | Keep this many of the newest default-branch builds |
-| `orphans` | `report` | `report` or `delete` untagged images whose tag moved on |
-| `orphan-min-age-days` | `30` | With `orphans: delete`, only delete orphans older than this |
-| `dry-run` | `false` | Only report what would be deleted |
+| Input                 | Default          | Meaning                                                          |
+| --------------------- | ---------------- | ---------------------------------------------------------------- |
+| `token`               | `github.token`   | Needs `packages: write`, `pull-requests: read`, `contents: read` |
+| `package`             | repository name  | Container package to clean up                                    |
+| `default-branch`      | the repository's | Branch whose builds are kept by age and count                    |
+| `keep-tags`           |                  | Regular expression for extra tags that always keep their image   |
+| `keep-days`           | `30`             | Keep default-branch builds younger than this                     |
+| `keep-count`          | `10`             | Keep this many of the newest default-branch builds               |
+| `orphans`             | `report`         | `report` or `delete` untagged images whose tag moved on          |
+| `orphan-min-age-days` | `30`             | With `orphans: delete`, only delete orphans older than this      |
+| `dry-run`             | `false`          | Only report what would be deleted                                |
 
 ## Outputs
 
-| Output | Meaning |
-| --- | --- |
-| `planned` | Versions selected for deletion |
+| Output    | Meaning                           |
+| --------- | --------------------------------- |
+| `planned` | Versions selected for deletion    |
 | `deleted` | Versions deleted (0 in a dry run) |

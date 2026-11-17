@@ -33,7 +33,7 @@ repositories, including a 3-day wait before proposing a release. Extend it from 
 `renovate.json`:
 
 ```json
-{"extends": ["github>lipkau/gh-tools//renovate/default"]}
+{ "extends": ["github>lipkau/gh-tools//renovate/default"] }
 ```
 
 ## 📖 Quick Start

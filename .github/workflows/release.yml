@@ -3,11 +3,11 @@ name: Release Actions
 on:
   push:
     tags:
-      - '*/v*' # Matches action-name/v1.0.0 pattern
+      - "*/v*" # Matches action-name/v1.0.0 pattern
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag to release (e.g., changelog-to-release/v1.1.0)'
+        description: "Tag to release (e.g., changelog-to-release/v1.1.0)"
         required: true
 
 permissions:
@@ -70,7 +70,7 @@ jobs:
       - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: ${{ steps.parse.outputs.tag }}
-          name: '${{ steps.parse.outputs.action_name }} ${{ steps.release_notes.outputs.title }}'
+          name: "${{ steps.parse.outputs.action_name }} ${{ steps.release_notes.outputs.title }}"
           body: |
             ${{ steps.release_notes.outputs.body }}
 
