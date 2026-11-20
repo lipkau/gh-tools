@@ -155,7 +155,8 @@ runs:
       env:
         # Name pull request images after the head commit, matching the checkout above.
         DOCKER_METADATA_PR_HEAD_SHA: "true"
-        DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+        # A loaded image is a single manifest with no index to annotate.
+        DOCKER_METADATA_ANNOTATIONS_LEVELS: ${{ inputs.load == 'true' && 'manifest' || 'manifest,index' }}
       with:
         images: ${{ inputs.image }}
         # The first tag that applies decides `latest`. With latest=auto only a semver tag without a
