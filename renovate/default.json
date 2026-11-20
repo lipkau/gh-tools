@@ -9,15 +9,19 @@
   "labels": ["dependencies"],
   "packageRules": [
     {
-      "description": "One pull request for every minor, patch and digest update",
+      "description": "One pull request for every minor, patch and digest update, merged once CI passes",
       "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
       "groupName": "non-major dependencies",
-      "groupSlug": "non-major"
+      "groupSlug": "non-major",
+      "automerge": true
     },
     {
-      "description": "Review major upgrades in the Dependency Dashboard before a pull request opens",
-      "matchUpdateTypes": ["major"],
-      "dependencyDashboardApproval": true
+      "description": "A 0.x release may break anything, so those updates get their own pull request for review",
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin", "pinDigest"],
+      "matchCurrentVersion": "/^v?0\\./",
+      "groupName": "0.x dependencies",
+      "groupSlug": "zerover",
+      "automerge": false
     }
   ]
 }

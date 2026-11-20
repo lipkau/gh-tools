@@ -29,8 +29,9 @@ old default-branch builds, without breaking multi-platform images.
 ## 🔧 Renovate preset
 
 [`renovate/default.json`](renovate/default.json) holds the Renovate settings shared by lipkau's
-repositories, including a 3-day wait before proposing a release. Extend it from a repository's
-`renovate.json`:
+repositories. It waits 3 days before proposing a release, then opens one weekly pull request for
+minor, patch and digest updates and merges it once CI passes. Updates of 0.x versions and majors get
+pull requests that wait for a review. Extend it from a repository's `renovate.json`:
 
 ```json
 { "extends": ["github>lipkau/gh-tools//renovate/default"] }
