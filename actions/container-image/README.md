@@ -44,6 +44,34 @@ jobs:
           latest: release
 ```
 
+## Test before pushing
+
+To test the image before anything is published, build it twice. The first call loads it into the
+runner's Docker with `load: true`; the steps after it test `ref`. The second call pushes, and reuses
+the first build's cache. Both calls need the same single platform, because Docker can load only one.
+
+```yaml
+steps:
+  - uses: actions/checkout@<commit sha> # v7.0.1
+    with:
+      ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      persist-credentials: false
+  - uses: lipkau/gh-tools/actions/container-image@<commit sha> # container-image/v1.1.0
+    id: test-image
+    with:
+      checkout: "false"
+      load: "true"
+      platforms: linux/amd64
+  - run: tests/smoke.sh "${{ steps.test-image.outputs.ref }}"
+  - uses: lipkau/gh-tools/actions/container-image@<commit sha> # container-image/v1.1.0
+    with:
+      checkout: "false"
+      platforms: linux/amd64
+```
+
+A loaded image has no provenance attestation or SBOM, because Docker's image store can't hold them.
+The pushed image has both.
+
 ## Inputs
 
 | Input          | Default                   | Meaning                                                      |
@@ -59,6 +87,7 @@ jobs:
 | `checkout`     | `true`                    | `false` when the job already checked out the commit to build |
 | `fetch-depth`  | `1`                       | Commits to check out; `0` for the full history               |
 | `push`         | `auto`                    | `auto` pushes except for forks; `false` only builds          |
+| `load`         | `false`                   | `true` loads the image into Docker instead of pushing it     |
 | `token`        | `github.token`            | Needs `packages: write`                                      |
 
 ## Outputs
@@ -67,6 +96,7 @@ jobs:
 | -------- | ------------------------------ |
 | `digest` | Digest of the pushed image     |
 | `tags`   | Image references, one per line |
+| `ref`    | The first of `tags`            |
 
 Every image gets OCI labels and annotations from the repository, a provenance attestation and an
 SBOM. The run's summary lists the tags.

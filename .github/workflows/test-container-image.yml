@@ -55,3 +55,49 @@ jobs:
             have=no; grep -q ':latest$' <<<"$TAGS" && have=yes
             [[ $want == "$have" ]] || { echo "::error::latest=$LATEST: expected latest $want, got $have"; exit 1; }
           fi
+
+  load:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: ./actions/container-image
+        id: image
+        with:
+          checkout: "false"
+          load: "true"
+          context: actions/container-image/tests
+          build-args: GREETING=hi
+          platforms: linux/amd64
+
+      - name: Run the loaded image
+        env:
+          REF: ${{ steps.image.outputs.ref }}
+        run: |
+          [[ -n $REF ]] || { echo "::error::no ref output"; exit 1; }
+          out=$(docker run --rm "$REF")
+          [[ $out == hi ]] || { echo "::error::expected hi, got $out"; exit 1; }
+
+  load-refuses-several-platforms:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: ./actions/container-image
+        id: image
+        continue-on-error: true
+        with:
+          checkout: "false"
+          load: "true"
+          context: actions/container-image/tests
+          platforms: linux/amd64,linux/arm64
+          pr-platforms: linux/amd64,linux/arm64
+
+      - name: Check it failed
+        env:
+          OUTCOME: ${{ steps.image.outcome }}
+        run: '[[ $OUTCOME == failure ]] || { echo "::error::load with two platforms did not fail"; exit 1; }'
