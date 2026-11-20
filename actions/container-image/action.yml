@@ -38,6 +38,11 @@ inputs:
   push:
     description: "`auto` pushes except for a fork's pull request; `false` only builds"
     default: auto
+  load:
+    description: >-
+      `true` loads the image into the runner's Docker instead of pushing it, so later steps can test
+      it. Needs a single platform. Call the action again without `load` to push.
+    default: "false"
   token:
     description: "Token that can push packages (`packages: write`)"
     default: ${{ github.token }}
@@ -49,6 +54,9 @@ outputs:
   tags:
     description: Image references that were built, one per line
     value: ${{ steps.meta.outputs.tags }}
+  ref:
+    description: The first of `tags`, for steps that test a loaded image
+    value: ${{ steps.ref.outputs.ref }}
 
 runs:
   using: composite
@@ -58,6 +66,7 @@ runs:
       env:
         LATEST: ${{ inputs.latest }}
         PUSH: ${{ inputs.push }}
+        LOAD: ${{ inputs.load }}
       run: |
         if [[ $LATEST != release && $LATEST != main ]]; then
           echo "::error::latest must be \"release\" or \"main\", not \"$LATEST\""
@@ -65,6 +74,10 @@ runs:
         fi
         if [[ $PUSH != auto && $PUSH != false ]]; then
           echo "::error::push must be \"auto\" or \"false\", not \"$PUSH\""
+          exit 1
+        fi
+        if [[ $LOAD != true && $LOAD != false ]]; then
+          echo "::error::load must be \"true\" or \"false\", not \"$LOAD\""
           exit 1
         fi
 
@@ -100,6 +113,7 @@ runs:
         PLATFORMS: ${{ inputs.platforms }}
         PR_PLATFORMS: ${{ inputs.pr-platforms }}
         PUSH: ${{ inputs.push }}
+        LOAD: ${{ inputs.load }}
       run: |
         # Docker tags allow [A-Za-z0-9_.-], up to 128 characters: feat/x becomes feat-x.
         # ghcr-cleanup derives the same tag to find a closed pull request's images.
@@ -113,6 +127,13 @@ runs:
           platforms=${PR_PLATFORMS:-$PLATFORMS}
           # A fork's pull request gets a read-only token: build without pushing.
           [[ $HEAD_REPO == "$GITHUB_REPOSITORY" ]] || push=false
+        fi
+        if [[ $LOAD == true ]]; then
+          push=false
+          if [[ $platforms == *,* ]]; then
+            echo "::error::load needs one platform, not \"$platforms\". Set platforms (and pr-platforms) to one."
+            exit 1
+          fi
         fi
         echo "platforms=$platforms" >> "$GITHUB_OUTPUT"
         echo "push=$push" >> "$GITHUB_OUTPUT"
@@ -134,7 +155,8 @@ runs:
       env:
         # Name pull request images after the head commit, matching the checkout above.
         DOCKER_METADATA_PR_HEAD_SHA: "true"
-        DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+        # A loaded image is a single manifest with no index to annotate.
+        DOCKER_METADATA_ANNOTATIONS_LEVELS: ${{ inputs.load == 'true' && 'manifest' || 'manifest,index' }}
       with:
         images: ${{ inputs.image }}
         # The first tag that applies decides `latest`. With latest=auto only a semver tag without a
@@ -159,14 +181,23 @@ runs:
         build-args: ${{ inputs.build-args }}
         platforms: ${{ steps.plan.outputs.platforms }}
         push: ${{ steps.plan.outputs.push }}
+        load: ${{ inputs.load == 'true' }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         annotations: ${{ steps.meta.outputs.annotations }}
-        provenance: mode=max
-        sbom: true
+        # Docker's image store can't hold attestations, so a loaded image gets none; the pushed one does.
+        provenance: ${{ inputs.load == 'true' && 'false' || 'mode=max' }}
+        sbom: ${{ inputs.load != 'true' }}
         cache-from: type=gha
         # The cache only speeds builds up; a refused cache write must not fail the image.
         cache-to: type=gha,mode=max,ignore-error=true
+
+    - name: First tag
+      id: ref
+      shell: bash
+      env:
+        TAGS: ${{ steps.meta.outputs.tags }}
+      run: echo "ref=$(head -n 1 <<<"$TAGS")" >> "$GITHUB_OUTPUT"
 
     - name: Summary
       shell: bash
@@ -174,9 +205,12 @@ runs:
         TAGS: ${{ steps.meta.outputs.tags }}
         DIGEST: ${{ steps.build.outputs.digest }}
         PUSH: ${{ steps.plan.outputs.push }}
+        LOAD: ${{ inputs.load }}
       run: |
         {
-          if [[ $PUSH == true ]]; then echo "### Pushed image"; else echo "### Built image (not pushed)"; fi
+          if [[ $PUSH == true ]]; then echo "### Pushed image"
+          elif [[ $LOAD == true ]]; then echo "### Loaded image (not pushed)"
+          else echo "### Built image (not pushed)"; fi
           echo
           echo '```'
           printf '%s\n' "$TAGS"
